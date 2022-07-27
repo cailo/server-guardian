@@ -1,5 +1,5 @@
 # server-guardian
-This is a simple bash script that monitor the server high cpu, ram usage, the hard disk free space, status postgresql, status apache2 and check the systemctl services status.
+This is a simple bash script that monitor the server high cpu, ram usage, the hard disk free space, postgresql status, apache2 status and check the systemctl services status.
 
 If the ram or cpu usage is greather then limit or a service is failed or the disk usage is greather then limit, send a message to telegram user
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This is a simple bash script that monitor the server high cpu, ram usage, the hard disk free space, status postgresql, status apache2 and check the systemctl services status.
+# This is a simple bash script that monitor the server high cpu, ram usage, the hard disk free space, postgresql status, apache2 status and check the systemctl services status.
 # If the ram or cpu usage is greather then limit or a service is failed, send a message to telegram user.
 #
 # Require telegram bot and telegram user

@@ -1,5 +1,6 @@
 # server-guardian
-This is a simple bash script that monitor the server high cpu and ram usage, check the systemctl services status and the hard disk free space.
+This is a simple bash script that monitor the server high cpu, ram usage, the hard disk free space, status postgresql, status apache2 and check the systemctl services status.
+
 If the ram or cpu usage is greather then limit or a service is failed or the disk usage is greather then limit, send a message to telegram user
 
 ## How to use
@@ -7,15 +8,27 @@ If the ram or cpu usage is greather then limit or a service is failed or the dis
 - `sudo cp /path/to/server-guardian/.config.demo /path/to/server-guardian/.config` 
 - edit .config file and type your telegram bot key and chat or adjust the options
 - `sudo chmod 600 /path/to/server-guardian/.config`
-- `sudo chmod 640 /path/to/server-guardian/send-alert.txt`
 - `sudo chmod 754 /path/to/server-guardian/guardian.sh`
-- `sudo crontab -e`
-- `* * * * * cd /path/to/server-guardian/ && ./guardian.sh > /dev/null 2>&1`
+- `sudo touch /etc/systemd/system/guardian.service`
+- `sudo chmod 664 /etc/systemd/system/guardian.service`
+- edit guardian.service file
+```
+[Unit]
+Description=server-guardian
+After=network.target
+StartLimitIntervalSec=0
 
-## Advanced Use
-- `* * * * * cd /path/to/server-guardian/ && ./guardian.sh --warn-every 30 --watch-services 0 --watch-cpu 1 --watch-ram 1 --watch-hard-disk 0 --cpu-warning-level high --memory-limit 60 --disk-space-limit 80 --config /home/my-custom/.config --config-telegram-variable-token TELEGRAM_TOKEN_CUSTOM_NAME --config-telegram-variable-chatid TELEGRAM_CHAT_ID_CUSTOM_NAME > /dev/null 2>&1`
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+ExecStart=/path/to/server-guardian/guardian.sh > /dev/null 2>&1`
 
-**Note**: when you pass an option, this will overrides the default value stored into config file.
+[Install]
+WantedBy=multi-user.target
+```
+- `sudo systemctl start guardian.service`
+- `sudo systemctl enable guardian.service`
 
 ### Options
 `--warn-every` Minutes number between each alert
@@ -27,6 +40,20 @@ If the ram or cpu usage is greather then limit or a service is failed or the dis
 `--watch-services` 1 to enable or 0 to disable the services failed alert
     
 `--watch-hard-disk` 1 to enable or 0 to disable the hard disk free space alert
+
+`--watch-apache2` 1 to enable or 0 to disable the services failed alert
+
+`--watch-postgresql` 1 to enable or 0 to disable the services failed alert
+
+`--url` URL used by curl to check apache2 service
+
+`--pg_host` Host to check postgresql service
+
+`--pg_database` Database to check postgresql service
+
+`--pg_port` Port to check postgresql service
+
+`--pg_user` User to check postgresql service
     
 `--cpu-warning-level` 
 - **high**: to receive an alert if the load average of last minute is greater than cpu core number. 

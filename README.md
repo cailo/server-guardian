@@ -3,6 +3,16 @@ This is a simple bash script that monitor the server high cpu, ram usage, the ha
 
 If the ram or cpu usage is greather then limit or a service is failed or the disk usage is greather then limit, send a message to telegram user
 
+## Create bot telegram and group
+- Open Telegram
+- Enter `@Botfather` in the search tab and choose this bot.
+- Choose or type the /newbot command and send it.
+- Choose a name for your bot and a username for your bot — the bot can be found by its username in searches. The username must be unique and end with the word "bot".
+- After you choose a suitable name for your bot — the bot is created. You will receive a message with a link to your bot t.me/<bot_username> and the token.
+- Create new group.
+- Add `@myidbot` to group.
+- `/getgroupid@myidbot`
+
 ## How to use
 - `sudo chown -R root:root /path/to/server-guardian`
 - `sudo cp /path/to/server-guardian/.config.demo /path/to/server-guardian/.config` 
@@ -22,7 +32,7 @@ StartLimitIntervalSec=0
 Type=simple
 Restart=always
 RestartSec=1
-ExecStart=/path/to/server-guardian/guardian.sh > /dev/null 2>&1`
+ExecStart=/path/to/server-guardian/guardian.sh > /dev/null 2>&1
 
 [Install]
 WantedBy=multi-user.target

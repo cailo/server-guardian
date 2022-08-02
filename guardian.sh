@@ -347,6 +347,9 @@ fi
 telegram_title="Server - *$server_name*:"
 
 if [ "" == "$send_sysinfo" ]; then
+  send_sysinfo=$(awk -F'=' '/^send_sysinfo=/ { print $2 }' $config_file)
+fi
+if [ "" == "$send_sysinfo" ]; then
   printf "Add send_sysinfo variable to config file.\n"
   exit 1
 fi

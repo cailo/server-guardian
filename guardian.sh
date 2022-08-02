@@ -90,9 +90,10 @@ send_message() {
 
   #store top results to file
   top -n1 -b > $top_report_file
-  telegram_message="${telegram_message}. See top results here: $top_report_file"
+  telegram_message="${telegram_message}."
+  report=$(echo -e "\n\n"See top results here: $top_report_file
 
-  curl -s -X POST "https://api.telegram.org/bot$telegram_bot_token/sendMessage" -F chat_id=$telegram_user_chat_id -F text="$date $telegram_title $ip $telegram_message" -F parse_mode="Markdown"
+  curl -s -X POST "https://api.telegram.org/bot$telegram_bot_token/sendMessage" -F chat_id=$telegram_user_chat_id -F text="$date $telegram_title $ip $telegram_message $report" -F parse_mode="Markdown"
 
 }
 
@@ -402,8 +403,7 @@ send_info() {
   sysinfotxt+=$(echo -e "\n")
   fi
   sysinfotxt+=$(echo -e "\n----Package Versions----")
-  sysinfotxt+=$(echo -e "\n" && which apache2ctl &> /dev/null && apache2ctl -v | head -1 | awk '{print $3}')
-  sysinfotxt+=$(echo -e "\n" && which apache2 &> /dev/null && apache2 -v | head -1 | awk '{print $3}')
+  sysinfotxt+=$(echo -e "\n" && (which apache2ctl &> /dev/null && apache2ctl -v | head -1 | awk '{print $3}') || (which apache2 &> /dev/null && apache2 -v | head -1 | awk '{print $3}'))
   sysinfotxt+=$(echo -e "\n" && which nginx &> /dev/null && nginx -v)
   sysinfotxt+=$(echo -e "\n" && which psql &> /dev/null && psql --version)
   sysinfotxt+=$(echo -e "\n" && which mysql &> /dev/null && mysql -V |awk '{print $1,$2,$3,$4,$5}')

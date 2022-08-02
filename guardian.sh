@@ -91,7 +91,7 @@ send_message() {
   #store top results to file
   top -n1 -b > $top_report_file
   telegram_message="${telegram_message}."
-  report=$(echo -e "\n\n"See top results here: $top_report_file
+  report=$(echo -e "\n\n"See top results here: $top_report_file)
 
   curl -s -X POST "https://api.telegram.org/bot$telegram_bot_token/sendMessage" -F chat_id=$telegram_user_chat_id -F text="$date $telegram_title $ip $telegram_message $report" -F parse_mode="Markdown"
 

@@ -120,6 +120,7 @@ pg_host=""
 pg_database=""
 pg_port=""
 pg_user=""
+send_sysinfo=""
 
 ##########################
 # Get options from cli
@@ -345,6 +346,72 @@ fi
 
 telegram_title="Server - *$server_name*:"
 
+if [ "" == "$send_sysinfo" ]; then
+  printf "Add send_sysinfo variable to config file.\n"
+  exit 1
+fi
+
+send_info() {
+  sysinfotxt=$(echo -e "\n\n----System Information---- ")
+  sysinfotxt+=$(echo -e "\nHostname:\t\t"`hostname`)
+  sysinfotxt+=$(echo -e "\nuptime:\t\t\t"`uptime | awk '{print $3,$4}' | sed 's/,//'`)
+  sysinfotxt+=$(echo -e "\nManufacturer:\t\t"`cat /sys/class/dmi/id/chassis_vendor`)
+  sysinfotxt+=$(echo -e "\nProduct Name:\t\t"`cat /sys/class/dmi/id/product_name`)
+  sysinfotxt+=$(echo -e "\nVersion:\t\t"`cat /sys/class/dmi/id/product_version`)
+  sysinfotxt+=$(echo -e "\nSerial Number:\t\t"`cat /sys/class/dmi/id/product_serial`)
+  sysinfotxt+=$(echo -e "\nMachine Type:\t\t"`vserver=$(lscpu | grep Hypervisor | wc -l); if [ $vserver -gt 0 ]; then echo "VM"; else echo "Physical"; fi`)
+  sysinfotxt+=$(echo -e "\nOperating System:\t"`hostnamectl | grep "Operating System" | sed  's/Operating System: //g'`)
+  sysinfotxt+=$(echo -e "\nKernel:\t\t\t"`uname -r`)
+  sysinfotxt+=$(echo -e "\nArchitecture:\t\t"`uname -m`)
+  sysinfotxt+=$(echo -e "\nProcessor Name:\t\t"`awk -F':' '/^model name/ {print $2}' /proc/cpuinfo | uniq | sed -e 's/^[ \t]*//'`)
+  sysinfotxt+=$(echo -e "\nActive User:\t\t"`w | cut -d ' ' -f1 | grep -v USER | xargs -n1`)
+  #sysinfotxt+=$(echo -e "\nSystem Main IP:\t\t"`ip -4 a |grep inet|grep "scope global"|grep -P -o "inet \d+.\d+.\d+.\d+"|grep -o -P "\d+.\d+.\d+.\d+"`)
+  sysinfotxt+=$(echo -e "\n\n----CPU/Memory Usage----")
+  sysinfotxt+=$(echo -e "\nMemory Usage:\t"`free | awk '/Mem/{printf("%.2f"), $3/$2*100}'`%)
+  if [ `free | awk '/Swap/{ print $2}'` == 0 ]
+  then
+      sysinfotxt+=$(echo -e "\nSwap not enabled")
+  else
+      sysinfotxt+=$(echo -e "\nSwap Usage:\t"`free | awk '/Swap/{printf("%.2f"), $3/$2*100}'`%)
+  fi
+  sysinfotxt+=$(echo -e "\nCPU Usage:\t"`cat /proc/stat | awk '/cpu/{printf("%.2f\n"), ($2+$4)*100/($2+$4+$5)}' |  awk '{print $0}' | head -1`%)
+  sysinfotxt+=$(echo -e "\n\n----Disk Usage >80%----")
+  sysinfotxt+=$(echo -e "\n" & df -Ph | sed s/%//g | awk '{ if($5 > 80) print $0;}')
+  
+  #echo -e "-------------------------------For WWN Details-------------------------------"
+  #vserver=$(lscpu | grep Hypervisor | wc -l)
+  #if [ $vserver -gt 0 ]
+  #then
+  #echo "$(hostname) is a VM"
+  #else
+  #cat /sys/class/fc_host/host?/port_name
+  #fi
+  #echo ""
+
+  if (( $(cat /etc/*-release | grep -w "Ubuntu|Debian" | wc -l) > 0 ))
+  then
+  sysinfotxt+=$(echo -e "\n\n----Package Updates----")
+  sysinfotxt+=$(echo -e "\n" && apt list --upgradable | wc -l)
+  sysinfotxt+=$(echo -e "\n")
+  else
+  sysinfotxt+=$(echo -e "\n\n----Package Updates----")
+  sysinfotxt+=$(echo -e "\n" && pacman -Qu | wc -l)
+  sysinfotxt+=$(echo -e "\n")
+  fi
+  sysinfotxt+=$(echo -e "\n----Package Versions----")
+  sysinfotxt+=$(echo -e "\n" && which apache2ctl &> /dev/null && apache2ctl -v | head -1 | awk '{print $3}')
+  sysinfotxt+=$(echo -e "\n" && which apache2 &> /dev/null && apache2 -v | head -1 | awk '{print $3}')
+  sysinfotxt+=$(echo -e "\n" && which nginx &> /dev/null && nginx -v)
+  sysinfotxt+=$(echo -e "\n" && which psql &> /dev/null && psql --version)
+  sysinfotxt+=$(echo -e "\n" && which mysql &> /dev/null && mysql -V |awk '{print $1,$2,$3,$4,$5}')
+  sysinfotxt+=$(echo -e "\n" && which php &> /dev/null && php --version | head -1 | awk '{print $1,$2}')
+  sysinfotxt+=$(echo -e "\n" && which java &> /dev/null && java --version | head -1)
+  
+  send_message "$sysinfotxt" 
+}
+
+send=false
+
 while true
 do
 ##########################
@@ -410,6 +477,19 @@ fi
 if [ "1" == "$watch_postgresql" ]; then
   arr=("If the server refuses connections (for example, during startup)" "If there was no response to the connection attempt" "If no attempt was made (eg due to invalid parameters)")
   pg_isready -d $pg_database -h $pg_host -p $pg_port -U $pg_user || send_message "Error in Postgresql: ${arr[$?]}"
+fi
+
+if [ "1" == "$send_sysinfo" ]; then
+  if [[ (`date +"%a%H"` == mar11 || `date +"%a%H"` == tue11) && $send == false ]]
+  then
+    send_info
+    send=true
+  fi
+
+  if [[ !(`date +"%a"` == mar || `date +"%a"` == tue) && $send == true ]]
+  then
+    send=false
+  fi
 fi
 
 echo "it's all right."

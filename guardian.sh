@@ -391,7 +391,7 @@ send_info() {
   #fi
   #echo ""
 
-  if (( $(cat /etc/*-release | grep -w "Ubuntu|Debian" | wc -l) > 0 ))
+  if (( $(cat /etc/*-release | grep -w 'Ubuntu\|Debian' | wc -l) > 0 ))
   then
   sysinfotxt+=$(echo -e "\n\n----Package Updates----")
   sysinfotxt+=$(echo -e "\n" && apt list --upgradable | wc -l)
